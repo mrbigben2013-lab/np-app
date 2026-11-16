@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Ново-Переделкино — Mini App</title>
+  <script src="https://telegram.org"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #faf9f6; color: #18181b; padding-bottom: 60px; }
+    .hdr { background: linear-gradient(135deg, #7f1d1d, #dc2626); color: #fff; padding: 14px 16px; border-bottom: 3px solid #facc15; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 50; }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .usr { background: rgba(0,0,0,0.25); border: 1px solid #facc15; padding: 4px 10px; border-radius: 99px; font-size: 11px; color: #fef08a; font-weight: 700; }
+    .tabs { display: flex; background: #fff; padding: 5px; margin: 12px 14px; border-radius: 12px; border: 1px solid #e4e4e7; gap: 5px; }
+    .tab { flex: 1; padding: 9px 4px; border-radius: 9px; font-size: 13px; font-weight: 700; color: #52525b; border: none; background: transparent; cursor: pointer; }
+    .tab.active { background: #dc2626; color: #fff; }
+    .filters { display: flex; gap: 8px; padding: 0 14px 12px; overflow-x: auto; }
+    .chip { background: #fff; border: 1px solid #e4e4e7; color: #3f3f46; padding: 6px 12px; border-radius: 99px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .chip.active { background: #18181b; color: #facc15; border-color: #18181b; }
+    .feed { padding: 0 14px; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e4e4e7; border-top: 3px solid #dc2626; border-radius: 14px; overflow: hidden; }
+    .c-img { width: 100%; height: 170px; object-fit: cover; display: block; }
+    .c-body { padding: 14px; }
+    .c-meta { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; margin-bottom: 8px; }
+    .tag { padding: 3px 8px; border-radius: 6px; color: #fff; background: #dc2626; }
+    .tag-np { background: #18181b; color: #facc15; }
+    .c-txt { font-size: 14px; line-height: 1.45; color: #27272a; margin-bottom: 10px; }
+    .c-foot { display: flex; justify-content: space-between; border-top: 1px solid #f4f4f5; padding-top: 8px; font-size: 12px; }
+    .init { background: #fff; border: 1px solid #e4e4e7; border-left: 4px solid #f59e0b; border-radius: 14px; padding: 14px; }
+    .bar { height: 6px; background: #f4f4f5; border-radius: 99px; overflow: hidden; margin: 10px 0; }
+    .fill { height: 100%; background: linear-gradient(90deg, #dc2626, #facc15); }
+    .v-btn { background: #dc2626; color: #fff; border: none; padding: 6px 14px; border-radius: 99px; font-size: 12px; font-weight: 700; cursor: pointer; }
+    .v-btn.voted { background: #16a34a; }
+    .f-card { background: #fff; border: 1px solid #e4e4e7; border-radius: 14px; padding: 16px; margin: 0 14px; }
+    .inp { width: 100%; padding: 10px; border: 1.5px solid #e4e4e7; border-radius: 9px; font-size: 14px; margin: 5px 0 12px; font-family: inherit; }
+    .s-btn { width: 100%; background: #dc2626; color: #fff; border: none; border-bottom: 3px solid #facc15; padding: 12px; border-radius: 10px; font-weight: 800; font-size: 14px; cursor: pointer; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <header class="hdr">
+    <div class="brand">
+      <svg width="38" height="38" viewBox="0 0 64 64">
+        <rect x="2" y="2" width="60" height="60" rx="16" fill="#991b1b" stroke="#facc15" stroke-width="3"/>
+        <path d="M19 33h25c4.4 0 8-3.4 8-7.6 0-3.9-3-7.1-6.9-7.5C43.9 12.2 38.8 8 32.5 8c-6.8 0-12.4 5.2-12.9 11.8-3.8.8-6.6 4.1-6.6 8.1 0 3.1 2.7 5.1 6 5.1z" fill="#fff" stroke="#facc15" stroke-width="2"/>
+        <path d="M12 45l8.5 3.2c3.8 1.4 8 1.2 11.6-.6l12.2-6c1.6-.8 2.2-2.8 1.3-4.3-.9-1.5-2.8-1.9-4.3-1l-8.3 4.8" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+        <path d="M15 41c2.5-2 6.2-2.4 9.5-1l7.2 2.6c1.8.6 3.6-.5 3.6-2.3 0-1.3-.9-2.4-2.3-2.6l-6.8-1.2" fill="none" stroke="#facc15" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+      <div><strong style="font-size:16px; display:block; line-height:1.1;">Ново-Переделкино</strong><span style="font-size:11px; color:#fef08a;">Портал района ЗАО</span></div>
+    </div>
+    <span class="usr" id="tg-u">Житель НП</span>
+  </header>
+  <div class="tabs">
+    <button class="tab active" onclick="goTab('news', this)">📰 Новости ВК</button>
+    <button class="tab" onclick="goTab('init', this)">💡 Инициативы</button>
+    <button class="tab" onclick="goTab('add', this)">➕ Подать идею</button>
+  </div>
+
+  <div id="v-news">
+    <div class="filters">
+      <button class="chip active" onclick="flt('all', this)">Все группы</button>
+      <button class="chip" onclick="flt('raenza', this)">Раёнза</button>
+      <button class="chip" onclick="flt('novoperedelkinomos', this)">Ново-Переделкино</button>
+    </div>
+    <div class="feed" id="feed"></div>
+  </div>
+
+  <div id="v-init" class="hidden">
+    <div class="feed">
+      <div class="init">
+        <div style="font-size:12px; color:#dc2626; font-weight:700;">📍 ул. Шолохова, д. 12</div>
+        <h4 style="margin:4px 0 6px;">Установить лежачий полицейский у школы</h4>
+        <p style="font-size:13px; color:#52525b;">Водители объезжают пробку через двор на высокой скорости.</p>
+        <div class="bar"><div class="fill" style="width:71%;"></div></div>
+        <div style="display:flex; justify-content:space-between; align-items:center;"><strong style="font-size:13px;">❤️ <span>142</span> / 200</strong><button class="v-btn" onclick="vote(this, 200)">Поддержать</button></div>
+      </div>
+      <div class="init">
+        <div style="font-size:12px; color:#dc2626; font-weight:700;">📍 м. Новопеределкино, выход №3</div>
+        <h4 style="margin:4px 0 6px;">Дополнительная велопарковка у метро</h4>
+        <p style="font-size:13px; color:#52525b;">В утренние часы мест на стойке не хватает для велосипедов и самокатов.</p>
+        <div class="bar"><div class="fill" style="width:59%;"></div></div>
+        <div style="display:flex; justify-content:space-between; align-items:center;"><strong style="font-size:13px;">❤️ <span>89</span> / 150</strong><button class="v-btn" onclick="vote(this, 150)">Поддержать</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="v-add" class="hidden">
+    <div class="f-card">
+      <h3 style="font-size:17px; color:#7f1d1d; margin-bottom:12px;">Новая инициатива жителя</h3>
+      <form onsubmit="sendForm(event)">
+        <label style="font-size:12px; font-weight:700;">Заголовок</label>
+        <input class="inp" id="f-t" placeholder="Например: Осветить тропу к станции" required>
+        <label style="font-size:12px; font-weight:700;">Адрес в районе</label>
+        <input class="inp" id="f-a" placeholder="ул. Лукинская, д. 8" required>
+        <label style="font-size:12px; font-weight:700;">Описание</label>
+        <textarea class="inp" id="f-d" rows="3" placeholder="Суть предложения..." required></textarea>
+        <button type="submit" class="s-btn">Отправить в бот</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const tg = window.Telegram && window.Telegram.WebApp;
+    if (tg) { tg.ready(); tg.expand(); if (tg.initDataUnsafe?.user) document.getElementById('tg-u').textContent = tg.initDataUnsafe.user.first_name; }
+    const demo = [
+      { source: 'raenza', source_name: 'Раёнза • ://vk.com', date: 'Сегодня', text: 'Обновление разметки и пешеходных переходов на Боровском шоссе у метро «Новопеределкино».', image: 'https://unsplash.com', url: 'https://://vk.com' },
+      { source: 'novoperedelkinomos', source_name: 'Ново-Переделкино', date: 'Вчера', text: 'В Ульяновском лесопарке завершается установка новых фонарей вдоль прогулочной аллеи.', image: 'https://unsplash.com', url: 'https://vk.com' }
+    ];
+    let posts = demo;
+    fetch('./news.json?v=' + Date.now()).then(r => r.ok ? r.json() : demo).then(d => { posts = d; draw('all'); }).catch(() => draw('all'));
+    function draw(f) {
+      const list = f === 'all' ? posts : posts.filter(x => x.source === f);
+      document.getElementById('feed').innerHTML = list.map(p => `<article class="card">${p.image ? `<img class="c-img" src="${p.image}">` : ''}<div class="c-body"><div class="c-meta"><span class="tag ${p.source === 'raenza' ? '' : 'tag-np'}">${p.source_name}</span><span style="color:#71717a;">${p.date}</span></div><div class="c-txt">${p.text}</div><div class="c-foot"><span style="color:#71717a;">ВКонтакте</span><a href="${p.url}" target="_blank" style="color:#dc2626; font-weight:700; text-decoration:none;">Открыть ↗</a></div></div></article>`).join('');
+    }
+    function flt(s, b) { document.querySelectorAll('.chip').forEach(x => x.classList.remove('active')); b.classList.add('active'); draw(s); }
+    function goTab(id, b) { document.querySelectorAll('.tab').forEach(x => x.classList.remove('active')); b.classList.add('active'); ['news','init','add'].forEach(v => document.getElementById('v-'+v).classList.toggle('hidden', v !== id)); }
+    function vote(b, max) {
+      const box = b.closest('.init'), sp = box.querySelector('span'), fl = box.querySelector('.fill');
+      let n = parseInt(sp.textContent, 10);
+      if (b.classList.contains('voted')) { b.classList.remove('voted'); b.textContent = 'Поддержать'; n--; } else { b.classList.add('voted'); b.textContent = 'Поддержано ✓'; n++; }
+      sp.textContent = n; fl.style.width = Math.min(100, Math.round(n/max*100)) + '%';
+    }
+    function sendForm(e) {
+      e.preventDefault();
+      const data = JSON.stringify({ title: document.getElementById('f-t').value, addr: document.getElementById('f-a').value, desc: document.getElementById('f-d').value });
+      if (tg && tg.sendData) tg.sendData(data); else alert('Отправлено: ' + data);
+      e.target.reset(); goTab('init', document.querySelectorAll('.tab'));
+    }
+  </script>
+</body>
+</html>
